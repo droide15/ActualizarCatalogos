@@ -2,7 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using LumenWorks.Framework.IO.Csv;
-using Npgsql;
+using MySql.Data.MySqlClient;
 
 namespace ActualizarCatalogos
 {
@@ -13,7 +13,6 @@ namespace ActualizarCatalogos
             //leer lista de archivos
             DirectoryInfo d = new DirectoryInfo(@"..\catalogos"); //Assuming Test is your Folder
             FileInfo[] Files = d.GetFiles("*.csv"); //Getting Text files
-            List<string> ex_rep = new List<string>();
             string str = "";
             foreach (FileInfo file in Files)
             {
@@ -21,48 +20,65 @@ namespace ActualizarCatalogos
             }
             Console.WriteLine(str);
             Console.ReadKey();
+            
+            //lista de excepciones
+            List<string> ex_rep = new List<string>();
+            //leer excepciones a ignorar
+            string[] excepciones = System.IO.File.ReadAllLines(@"..\catalogos\ignorar.txt");
+            List<string> ex_ign = new List<string>();
+            foreach (string excepcion in excepciones)
+                if (!excepcion.StartsWith("//"))
+                    ex_ign.Add(excepcion);
 
             //insertando las tablas
             foreach (FileInfo file in Files)
             {
-                insertarTablas(file, ex_rep);
+                insertarTablas(file, ex_ign, ex_rep);
+
+                //reportando excepciones ocurridas
+                if (ex_rep.Count > 0)
+                    using (var sw = new StreamWriter(File.Open(@"..\catalogos\" + file.Name.Replace(".csv", ".log"), FileMode.Create)))
+                        foreach (string excepcion in ex_rep)
+                            sw.WriteLine(excepcion);
+
+                ex_rep.Clear();
             }
             Console.ReadKey();
         }
 
-        static private void insertarTablas(FileInfo file, List<string> ex_rep)
+        static private void insertarTablas(FileInfo file, List<string> ex_ign, List<string> ex_rep)
         {
-
-            //using (var connection = new NpgsqlConnection("Server=10.0.100.10;Port=5432;Database=master_itimbre_pruebas;User Id=master_itimbre_pruebas;Password=it1mbr3Pruebas;"))
-            using (var connection = new NpgsqlConnection("Server=10.0.100.10;Port=5432;Database=master_itimbre;User Id=master_itimbre;Password=m4st3R1T1mBR3;"))
+            using (CsvReader csv = new CsvReader(new StreamReader(file.FullName), true))
             {
-                using (CsvReader csv =
-                 new CsvReader(new StreamReader(file.FullName), true))
-                {
-                    int fieldCount;
-                    string[] headers;
-                    string pg_campos;
-                    string pg_vars;
-                    string pg_valores;
-                    List<string> campostemp = new List<string>();
-                    List<string> varstemp = new List<string>();
-                    List<string> valores = new List<string>();
+                int fieldCount;
+                string[] headers;
+                string ms_campos;
+                string ms_vars;
+                string ms_valores;
+                List<string> campostemp = new List<string>();
+                List<string> varstemp = new List<string>();
+                List<string> valores = new List<string>();
 
-                    Console.WriteLine("subiendo la tabla...");
-                    fieldCount = csv.FieldCount;
-                    headers = csv.GetFieldHeaders();
-                    campostemp.Add("cata_cata");
-                    campostemp.Add("cata_llave");
-                    for (int i = 1; i < fieldCount; i++)
-                    {
-                        campostemp.Add(headers[i]);
-                    }
-                    foreach (var campotemp in campostemp)
-                    {
-                        varstemp.Add(":" + campotemp);
-                    }
-                    pg_campos = string.Join(",", campostemp);
-                    pg_vars = string.Join(",", varstemp);
+                Console.WriteLine("...............................................");
+                Console.WriteLine("...procesando archivo " + file.FullName + " ...");
+                Console.WriteLine("...............................................");
+                fieldCount = csv.FieldCount;
+                headers = csv.GetFieldHeaders();
+                campostemp.Add("cata_cata");
+                campostemp.Add("cata_llave");
+                for (int i = 1; i < fieldCount; i++)
+                {
+                    campostemp.Add(headers[i]);
+                }
+                foreach (var campotemp in campostemp)
+                {
+                    varstemp.Add("@" + campotemp);
+                }
+                ms_campos = string.Join(",", campostemp);
+                ms_vars = string.Join(",", varstemp);
+
+                using (var connection = new MySqlConnection(@"server=mysql4.gear.host;userid=programamestadb;password=Ot0S2-PVBA~A;database=programamestadb"))
+                {
 
                     while (csv.ReadNextRecord())
                     {
@@ -86,41 +102,33 @@ namespace ActualizarCatalogos
                                     dato = dato.Replace("%", "");
                             valores.Add(dato);
                         }
-                        pg_valores = string.Join(",", valores);
+                        ms_valores = string.Join(",", valores);
 
                         try
                         {
-                            connection.Open();
-                            NpgsqlCommand command;
+                            if (connection.State != System.Data.ConnectionState.Open)
+                            {
+                                connection.Close();
+                                connection.Open();
+                            }
+
+                            MySqlCommand command;
 
                             // Create insert command.
-                            command = new NpgsqlCommand("INSERT INTO " +
-                             "sat_catalogos_33_nueva(" + pg_campos + ") VALUES(" + pg_vars + ")", connection);
-
-                            // Add paramaters.
-                            foreach (var campo in campostemp)
-                            {
-                                if (campo == "decimales" || campo == "porcentaje")
-                                    command.Parameters.Add(new NpgsqlParameter(campo,
-                                     NpgsqlTypes.NpgsqlDbType.Real));
-                                else
-                                    command.Parameters.Add(new NpgsqlParameter(campo,
-                                     NpgsqlTypes.NpgsqlDbType.Varchar));
-                            }
+                            command = new MySqlCommand("INSERT INTO " +
+                             "sat_catalogos_33(" + ms_campos + ") VALUES(" + ms_vars + ")", connection);
 
                             // Prepare the command.
                             command.Prepare();
 
-                            // Add value to the paramater.
-                            for (int i = 0; i < valores.Count; i++)
-                            {
-                                command.Parameters[i].Value = valores[i];
-                            }
+                            // Add paramaters.
+                            for (int i = 0; i < campostemp.Count; i++)
+                                command.Parameters.AddWithValue(campostemp[i], valores[i]);
 
                             // Execute SQL command.
                             int recordAffected = command.ExecuteNonQuery();
 
-                            Console.WriteLine("un dato fue subido");
+                            Console.WriteLine(".");
                         }
                         catch (Exception ex)
                         {
@@ -130,10 +138,17 @@ namespace ActualizarCatalogos
                             ex_rep.Add(file.Name + "|" + linea + "|" + ex.Message);
                             Console.WriteLine("---ERROR---");
                             Console.WriteLine(ex);
+                            if (!ex_ign.Contains(ex.Message))
+                            {
+                                if (connection != null && connection.State != System.Data.ConnectionState.Closed)
+                                    connection.Close();
+                                break;
+                            }
                         }
-                        connection.Close();
                     }
-                    Console.WriteLine("tabla subida exitosamente!");
+                    Console.WriteLine("---------------------------------------");
+                    Console.WriteLine("archivo " + file.FullName + " procesado");
+                    Console.WriteLine("---------------------------------------");
                 }
             }
         }

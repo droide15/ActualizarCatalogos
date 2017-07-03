@@ -37,3 +37,13 @@ C:\Users\jorgealberto\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\
 C:\Users\jorgealberto\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\Npgsql.xml
 C:\Users\jorgealberto\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\jorgealberto\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\obj\Debug\ActualizarCatalogos.csprojResolveAssemblyReference.cache
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\ActualizarCatalogos.exe.config
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\obj\Debug\ActualizarCatalogos.exe
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\obj\Debug\ActualizarCatalogos.pdb
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\ActualizarCatalogos.exe
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\ActualizarCatalogos.pdb
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\LumenWorks.Framework.IO.dll
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\LumenWorks.Framework.IO.pdb
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\LumenWorks.Framework.IO.xml
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\obj\Debug\ActualizarCatalogos.csprojResolveAssemblyReference.cache
+C:\Users\Hector Avila\Desktop\otros\ActualizarCatalogos\ActualizarCatalogos\bin\Debug\MySql.Data.dll
