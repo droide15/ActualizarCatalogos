@@ -27,7 +27,7 @@ namespace ActualizarCatalogos
             string[] excepciones = System.IO.File.ReadAllLines(@"..\catalogos\ignorar.txt");
             List<string> ex_ign = new List<string>();
             foreach (string excepcion in excepciones)
-                if (!excepcion.StartsWith("//"))
+                if (!excepcion.StartsWith("//") && !string.IsNullOrWhiteSpace(excepcion))
                     ex_ign.Add(excepcion);
 
             //insertando las tablas
@@ -36,10 +36,12 @@ namespace ActualizarCatalogos
                 insertarTablas(file, ex_ign, ex_rep);
 
                 //reportando excepciones ocurridas
-                if (ex_rep.Count > 0)
-                    using (var sw = new StreamWriter(File.Open(@"..\catalogos\" + file.Name.Replace(".csv", ".log"), FileMode.Create)))
-                        foreach (string excepcion in ex_rep)
-                            sw.WriteLine(excepcion);
+                using (var sw = new StreamWriter(File.Open(@"..\catalogos\" + file.Name.Replace(".csv", ".log"), FileMode.Create)))
+                {
+                    sw.WriteLine("lista de excepciones");
+                    foreach (string excepcion in ex_rep)
+                        sw.WriteLine(excepcion);
+                }
 
                 ex_rep.Clear();
             }
@@ -92,16 +94,7 @@ namespace ActualizarCatalogos
                         valores.Add(headers[0]);
                         valores.Add(csv[0]);
                         for (int i = 1; i < fieldCount; i++)
-                        {
-                            string campo = headers[i];
-                            string dato = csv[i];
-                            if (campo == "porcentaje")
-                                if (string.IsNullOrWhiteSpace(dato))
-                                    dato = "0.00";
-                                else
-                                    dato = dato.Replace("%", "");
-                            valores.Add(dato);
-                        }
+                            valores.Add(csv[i]);
                         ms_valores = string.Join(",", valores);
 
                         try
@@ -116,7 +109,7 @@ namespace ActualizarCatalogos
 
                             // Create insert command.
                             command = new MySqlCommand("INSERT INTO " +
-                             "sat_catalogos_33(" + ms_campos + ") VALUES(" + ms_vars + ")", connection);
+                             "sat_catalogos(" + ms_campos + ") VALUES(" + ms_vars + ")", connection);
 
                             // Prepare the command.
                             command.Prepare();
@@ -138,7 +131,14 @@ namespace ActualizarCatalogos
                             ex_rep.Add(file.Name + "|" + linea + "|" + ex.Message);
                             Console.WriteLine("---ERROR---");
                             Console.WriteLine(ex);
-                            if (!ex_ign.Contains(ex.Message))
+                            bool ignorar = false;
+                            foreach (string excepcion in ex_ign)
+                                if (ex.Message.Contains(excepcion))
+                                {
+                                    ignorar = true;
+                                    break;
+                                }
+                            if(!ignorar)
                             {
                                 if (connection != null && connection.State != System.Data.ConnectionState.Closed)
                                     connection.Close();

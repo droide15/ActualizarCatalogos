@@ -1,1 +1,8 @@
-//Se excedió el tiempo de espera de la operación.
+//*en este archivo puede incluir la lista de excepciones a ignorar
+//*las excepciones incluidas seran reportadas sin detener el procesamiento
+//*este archivo no afecta el reporte de excepciones ocurridas
+//*puede escribir la excepcion completa o parte del texto
+//*las lineas vaciaos o que empiecen con "//" no seran tomadas en cuenta (o sea que la excepcion no sera ignorada)
+
+Duplicate entry
+//Data truncated
