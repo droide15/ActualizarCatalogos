@@ -10,10 +10,10 @@ namespace ActualizarCatalogos
     {
         static void Main(string[] args)
         {
-
             //leer lista de archivos
-            DirectoryInfo d = new DirectoryInfo(@"C:\Users\Hector Avila\Desktop\sat_doc\cfdi 3.3\ActualizarCatalogos\catalogos"); //Assuming Test is your Folder
+            DirectoryInfo d = new DirectoryInfo(@"..\catalogos"); //Assuming Test is your Folder
             FileInfo[] Files = d.GetFiles("*.csv"); //Getting Text files
+            List<string> ex_rep = new List<string>();
             string str = "";
             foreach (FileInfo file in Files)
             {
@@ -25,21 +25,13 @@ namespace ActualizarCatalogos
             //insertando las tablas
             foreach (FileInfo file in Files)
             {
-                insertarTablas(file);
+                insertarTablas(file, ex_rep);
             }
             Console.ReadKey();
         }
 
-        static private void insertarTablas(FileInfo file)
+        static private void insertarTablas(FileInfo file, List<string> ex_rep)
         {
-            int fieldCount;
-            string[] headers;
-            string pg_campos;
-            string pg_vars;
-            string pg_valores;
-            List<string> campostemp = new List<string>();
-            List<string> varstemp = new List<string>();
-            List<string> valores = new List<string>();
 
             //using (var connection = new NpgsqlConnection("Server=10.0.100.10;Port=5432;Database=master_itimbre_pruebas;User Id=master_itimbre_pruebas;Password=it1mbr3Pruebas;"))
             using (var connection = new NpgsqlConnection("Server=10.0.100.10;Port=5432;Database=master_itimbre;User Id=master_itimbre;Password=m4st3R1T1mBR3;"))
@@ -47,6 +39,15 @@ namespace ActualizarCatalogos
                 using (CsvReader csv =
                  new CsvReader(new StreamReader(file.FullName), true))
                 {
+                    int fieldCount;
+                    string[] headers;
+                    string pg_campos;
+                    string pg_vars;
+                    string pg_valores;
+                    List<string> campostemp = new List<string>();
+                    List<string> varstemp = new List<string>();
+                    List<string> valores = new List<string>();
+
                     Console.WriteLine("subiendo la tabla...");
                     fieldCount = csv.FieldCount;
                     headers = csv.GetFieldHeaders();
@@ -65,6 +66,8 @@ namespace ActualizarCatalogos
 
                     while (csv.ReadNextRecord())
                     {
+                        string linea = "";
+
                         if (string.IsNullOrWhiteSpace(csv[0]))
                             continue;
 
@@ -119,10 +122,12 @@ namespace ActualizarCatalogos
 
                             Console.WriteLine("un dato fue subido");
                         }
-                        catch (NpgsqlException ex)
+                        catch (Exception ex)
                         {
-                            if (!ex.ToString().Contains("duplicate key value violates unique constraint"))
-                                Console.WriteLine("no se pudo subir un dato!");
+                            linea = "";
+                            for (int i = 0; i < fieldCount; i++)
+                                linea += csv[i] + ",";
+                            ex_rep.Add(file.Name + "|" + linea + "|" + ex.Message);
                             Console.WriteLine("---ERROR---");
                             Console.WriteLine(ex);
                         }
