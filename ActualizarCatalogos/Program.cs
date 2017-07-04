@@ -11,7 +11,7 @@ namespace ActualizarCatalogos
         static void Main(string[] args)
         {
             //leer lista de archivos
-            DirectoryInfo d = new DirectoryInfo(@"..\catalogos"); //Assuming Test is your Folder
+            DirectoryInfo d = new DirectoryInfo(@"..\..\catalogos"); //Assuming Test is your Folder
             FileInfo[] Files = d.GetFiles("*.csv"); //Getting Text files
             string str = "";
             foreach (FileInfo file in Files)
@@ -24,7 +24,7 @@ namespace ActualizarCatalogos
             //lista de excepciones
             List<string> ex_rep = new List<string>();
             //leer excepciones a ignorar
-            string[] excepciones = System.IO.File.ReadAllLines(@"..\catalogos\ignorar.txt");
+            string[] excepciones = System.IO.File.ReadAllLines(@"..\..\catalogos\ignorar.txt");
             List<string> ex_ign = new List<string>();
             foreach (string excepcion in excepciones)
                 if (!excepcion.StartsWith("//") && !string.IsNullOrWhiteSpace(excepcion))
@@ -36,7 +36,7 @@ namespace ActualizarCatalogos
                 insertarTablas(file, ex_ign, ex_rep);
 
                 //reportando excepciones ocurridas
-                using (var sw = new StreamWriter(File.Open(@"..\catalogos\" + file.Name.Replace(".csv", ".log"), FileMode.Create)))
+                using (var sw = new StreamWriter(File.Open(@"..\..\catalogos\" + file.Name.Replace(".csv", ".log"), FileMode.Create)))
                 {
                     sw.WriteLine("lista de excepciones");
                     foreach (string excepcion in ex_rep)
@@ -61,9 +61,9 @@ namespace ActualizarCatalogos
                 List<string> varstemp = new List<string>();
                 List<string> valores = new List<string>();
 
-                Console.WriteLine("...............................................");
-                Console.WriteLine("...procesando archivo " + file.FullName + " ...");
-                Console.WriteLine("...............................................");
+                Console.WriteLine("********************************************");
+                Console.WriteLine("procesando archivo " + file.FullName + " ...");
+                Console.WriteLine("********************************************");
                 fieldCount = csv.FieldCount;
                 headers = csv.GetFieldHeaders();
                 campostemp.Add("cata_cata");
@@ -81,7 +81,7 @@ namespace ActualizarCatalogos
 
                 using (var connection = new MySqlConnection(@"server=mysql4.gear.host;userid=programamestadb;password=Ot0S2-PVBA~A;database=programamestadb"))
                 {
-
+                    long contando = 0;
                     while (csv.ReadNextRecord())
                     {
                         string linea = "";
@@ -90,6 +90,7 @@ namespace ActualizarCatalogos
                             continue;
 
                         valores.Clear();
+                        Console.WriteLine(++contando + ":");
 
                         valores.Add(headers[0]);
                         valores.Add(csv[0]);
@@ -120,8 +121,6 @@ namespace ActualizarCatalogos
 
                             // Execute SQL command.
                             int recordAffected = command.ExecuteNonQuery();
-
-                            Console.WriteLine(".");
                         }
                         catch (Exception ex)
                         {
@@ -129,7 +128,7 @@ namespace ActualizarCatalogos
                             for (int i = 0; i < fieldCount; i++)
                                 linea += csv[i] + ",";
                             ex_rep.Add(file.Name + "|" + linea + "|" + ex.Message);
-                            Console.WriteLine("---ERROR---");
+                            Console.WriteLine("---EXCEPCION---");
                             Console.WriteLine(ex);
                             bool ignorar = false;
                             foreach (string excepcion in ex_ign)
@@ -146,9 +145,11 @@ namespace ActualizarCatalogos
                             }
                         }
                     }
-                    Console.WriteLine("---------------------------------------");
-                    Console.WriteLine("archivo " + file.FullName + " procesado");
-                    Console.WriteLine("---------------------------------------");
+                    if (connection != null && connection.State != System.Data.ConnectionState.Closed)
+                        connection.Close();
+                    Console.WriteLine("******************************************");
+                    Console.WriteLine("...archivo " + file.FullName + " procesado");
+                    Console.WriteLine("******************************************");
                 }
             }
         }
